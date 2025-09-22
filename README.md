@@ -12,17 +12,14 @@ El objetivo principal es facilitar la gestión académica y reducir el trabajo m
 
 ## Decisiones de Diseño
 - **Base de Datos: MySQL**
- - **Comunidad y soporte:** Al ser uno de los SGBD más usados a nivel mundial, MySQL cuenta con amplia documentación, foros y herramientas de administración.
- - Compatibilidad con el modelo de datos diseñado
-El proyecto define un modelo relacional con múltiples tablas interconectadas (Alumno, Profesor, Sección, Curso, Nota, Asistencia, etc.). MySQL, al ser un SGBD relacional ampliamente utilizado, soporta perfectamente el uso de claves primarias, foráneas, restricciones de integridad y consultas SQL complejas.
-Rendimiento y concurrencia
-Entre los requerimientos no funcionales se especifica la necesidad de gestionar múltiples usuarios simultáneamente (directora, tutores, polidocentes y alumnos) sin retrasos en operaciones como registro de asistencia o notas. MySQL está optimizado para operaciones de lectura y/o escritura intensivas y soporta motores de almacenamiento que manejan transacciones y concurrencia de forma eficiente.
-Seguridad de la información académica
-El sistema debe garantizar autenticación segura y confidencialidad de los datos personales de alumnos y docentes. MySQL permite implementar usuarios con roles diferenciados, lo cual se ajusta al modelo de permisos planteado (directora, tutor, polidocente, alumno). Además, admite encriptación y copias de seguridad periódicas.
-Escalabilidad y futuro crecimiento
-El proyecto contempla la escalabilidad como un requisito clave, ya que en fases futuras se integrará acceso web para alumnos y padres. MySQL es altamente escalable y puede adaptarse a un mayor volumen de usuarios y transacciones, soportando despliegues locales y en la nube.
+  - **Comunidad y soporte:** Al ser uno de los SGBD más usados a nivel mundial, MySQL cuenta con amplia documentación, foros y herramientas de administración.
+  - **Compatibilidad con el modelo de datos diseñado:** El proyecto define un modelo relacional con múltiples tablas interconectadas (Alumno, Profesor, Sección, Curso, Nota, Asistencia, etc.). MySQL, al ser un SGBD relacional ampliamente utilizado, soporta perfectamente el uso de claves primarias, foráneas, restricciones de integridad y consultas SQL complejas.
+  - **Rendimiento y concurrencia:** Entre los requerimientos no funcionales se especifica la necesidad de gestionar múltiples usuarios simultáneamente (directora, tutores, polidocentes y alumnos) sin retrasos en operaciones como registro de asistencia o notas. MySQL está optimizado para operaciones de lectura y/o escritura intensivas y soporta motores de almacenamiento que manejan transacciones y concurrencia de forma eficiente.
+  - **Seguridad de la información académica:** El sistema debe garantizar autenticación segura y confidencialidad de los datos personales de alumnos y docentes. MySQL permite implementar usuarios con roles diferenciados, lo cual se ajusta al modelo de permisos planteado (directora, tutor, polidocente, alumno). Además, admite encriptación y copias de seguridad periódicas.
+  - **Escalabilidad y futuro crecimiento:** El proyecto contempla la escalabilidad como un requisito clave, ya que en fases futuras se integrará acceso web para alumnos y padres. MySQL es altamente escalable y puede adaptarse a un mayor volumen de usuarios y transacciones, soportando despliegues locales y en la nube.
 
-- **Arquitectura de Software: Microservicios**
+- **Arquitectura de Software: **
+  - 
 
 ## Lenguaje Seleccionado: Python y Javascript
 Justificación:
