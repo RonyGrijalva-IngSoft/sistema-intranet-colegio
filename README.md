@@ -34,3 +34,14 @@ Justificación:
 - **Soporte de comunidad:** Ambos frameworks tienen ecosistemas maduros, documentación extensa y foros activos.
 - **Compatibilidad con los requisitos:** Django facilita la gestión de usuarios, generación de PDFs y conexión con MySQL, y React permite crear interfaces dinámicas y adaptables a dispositivos móviles y de escritorio.
 - **Facilidad de pruebas y despliegue:** Django integra un framework de testing y se despliega fácilmente en entornos cloud. React puede hospedarse en plataformas de despliegue continuo (CI/CD) que se integran bien con GitHub.
+
+## Estructura de ramas
+- main (estable): siempre lista para demo/entrega; no recibe trabajo en progreso.
+
+- develop (integración): base compartida; se sincroniza con lo entregado cada semana.
+
+- release/wX (corte semanal): agrupa los PR de la semana; permite probar y luego hacer un único merge controlado a main; después se sincroniza a develop.
+
+- wX/área-tarea (feature): 1 issue = 1 rama; aísla cambios, facilita revisión y trazabilidad; se borra tras el merge a su release.
+
+Ventajas clave: paralelismo seguro, control por etapas (feature → release → main), nombres claros por semana/tarea, rollback simple y repo limpio.
