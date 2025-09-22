@@ -18,9 +18,6 @@ El objetivo principal es facilitar la gestión académica y reducir el trabajo m
   - **Seguridad de la información académica:** El sistema debe garantizar autenticación segura y confidencialidad de los datos personales de alumnos y docentes. MySQL permite implementar usuarios con roles diferenciados, lo cual se ajusta al modelo de permisos planteado (directora, tutor, polidocente, alumno). Además, admite encriptación y copias de seguridad periódicas.
   - **Escalabilidad y futuro crecimiento:** El proyecto contempla la escalabilidad como un requisito clave, ya que en fases futuras se integrará acceso web para alumnos y padres. MySQL es altamente escalable y puede adaptarse a un mayor volumen de usuarios y transacciones, soportando despliegues locales y en la nube.
 
-- **Arquitectura de Software: **
-  - 
-
 ## Lenguaje Seleccionado: Python y Javascript
 Justificación:
 - **Curva de aprendizaje:** Python es conocido por su sintaxis clara y sencilla, mientras que JavaScript es el estándar de la web, ambos son fáciles de aprender para el equipo.
