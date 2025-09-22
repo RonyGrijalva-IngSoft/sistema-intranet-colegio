@@ -42,3 +42,14 @@ El sistema se implementa siguiendo una **arquitectura de 4 capas**, que permite 
 - **Capa de Persistencia**: Responsable del almacenamiento físico de la información. Se utiliza MySQL como sistema gestor de base de datos relacional, garantizando integridad y eficiencia.
 
 Esta arquitectura fue seleccionada por su claridad estructural, compatibilidad con el stack tecnológico elegido, y su capacidad para distribuir responsabilidades entre los miembros del equipo. Además, permite incorporar futuras funcionalidades como autenticación avanzada, control de acceso por roles y despliegue en contenedores sin comprometer la estabilidad del sistema.
+
+## Estructura de ramas
+- main (estable): siempre lista para demo/entrega; no recibe trabajo en progreso.
+
+- develop (integración): base compartida; se sincroniza con lo entregado cada semana.
+
+- release/wX (corte semanal): agrupa los PR de la semana; permite probar y luego hacer un único merge controlado a main; después se sincroniza a develop.
+
+- wX/área-tarea (feature): 1 issue = 1 rama; aísla cambios, facilita revisión y trazabilidad; se borra tras el merge a su release.
+
+Ventajas clave: paralelismo seguro, control por etapas (feature → release → main), nombres claros por semana/tarea, rollback simple y repo limpio.
