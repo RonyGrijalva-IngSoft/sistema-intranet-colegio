@@ -24,4 +24,4 @@ Justificación:
 - **Curva de aprendizaje:** Django trae muchos componentes listos (autenticación, ORM, administración), lo que reduce la complejidad, mientras que React tiene una estructura por componentes clara y bien documentada.
 - **Soporte de comunidad:** Ambos frameworks tienen ecosistemas maduros, documentación extensa y foros activos.
 - **Compatibilidad con los requisitos:** Django facilita la gestión de usuarios, generación de PDFs y conexión con MySQL, y React permite crear interfaces dinámicas y adaptables a dispositivos móviles y de escritorio.
-F- **Facilidad de pruebas y despliegue:** Django integra un framework de testing y se despliega fácilmente en entornos cloud. React puede hospedarse en plataformas de despliegue continuo (CI/CD) que se integran bien con GitHub.
+- **Facilidad de pruebas y despliegue:** Django integra un framework de testing y se despliega fácilmente en entornos cloud. React puede hospedarse en plataformas de despliegue continuo (CI/CD) que se integran bien con GitHub.
