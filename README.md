@@ -11,8 +11,11 @@ El objetivo principal es facilitar la gestión académica y reducir el trabajo m
 - Acceso multi-dispositivo, permitiendo el uso desde computadoras y dispositivos móviles.
 
 ## Decisiones de Diseño
+- **Base de Datos: MySQL**
+  - f 
+- **Arquitectura de Software: Microservicios**
 
-## Lemguaje Seleccionado: Python y Javascript
+## Lenguaje Seleccionado: Python y Javascript
 Justificación:
 - **Curva de aprendizaje:** Python es conocido por su sintaxis clara y sencilla, mientras que JavaScript es el estándar de la web, ambos son fáciles de aprender para el equipo.
 - **Soporte de comunidad:** Ambos cuentan con comunidades enormes, abundante documentación y librerías, lo que facilita resolver problemas y encontrar ejemplos.
