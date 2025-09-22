@@ -34,3 +34,15 @@ Justificación:
 - **Soporte de comunidad:** Ambos frameworks tienen ecosistemas maduros, documentación extensa y foros activos.
 - **Compatibilidad con los requisitos:** Django facilita la gestión de usuarios, generación de PDFs y conexión con MySQL, y React permite crear interfaces dinámicas y adaptables a dispositivos móviles y de escritorio.
 - **Facilidad de pruebas y despliegue:** Django integra un framework de testing y se despliega fácilmente en entornos cloud. React puede hospedarse en plataformas de despliegue continuo (CI/CD) que se integran bien con GitHub.
+
+## Arquitectura de Software
+
+El sistema se implementa siguiendo una **arquitectura de 4 capas**, que permite una separación clara de responsabilidades y facilita el mantenimiento, escalabilidad y evolución del proyecto. Las capas definidas son:
+
+- **Capa de Presentación**: Encargada de la interfaz gráfica y la interacción con el usuario. Se desarrolla con React.js, permitiendo una experiencia dinámica y adaptable a distintos dispositivos.
+- **Capa de Lógica de Negocio**: Contiene las reglas del sistema, procesamiento de datos y validaciones. Se implementa con Django, facilitando la organización de funcionalidades por módulos.
+- **Capa de Acceso a Datos**: Intermedia entre la lógica de negocio y la base de datos, gestionando consultas, inserciones y actualizaciones mediante el ORM de Django.
+- **Capa de Persistencia**: Responsable del almacenamiento físico de la información. Se utiliza MySQL como sistema gestor de base de datos relacional, garantizando integridad y eficiencia.
+
+Esta arquitectura fue seleccionada por su claridad estructural, compatibilidad con el stack tecnológico elegido, y su capacidad para distribuir responsabilidades entre los miembros del equipo. Además, permite incorporar futuras funcionalidades como autenticación avanzada, control de acceso por roles y despliegue en contenedores sin comprometer la estabilidad del sistema.
+
