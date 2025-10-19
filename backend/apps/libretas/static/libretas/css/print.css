@@ -1,0 +1,4 @@
+/* Placeholder S1: estilos de impresión */
+@page { size: A4; margin: 12mm; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #999; padding: 4px; }

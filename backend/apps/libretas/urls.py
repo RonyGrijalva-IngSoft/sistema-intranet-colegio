@@ -1,7 +1,14 @@
+# backend/apps/libretas/urls.py
 from django.urls import path
-from .api.views import BimestralPDFView, PdfPingView
+from .views.pdf import BimestralPreviewView, BimestralPDFView
+from .views.ugel import UgelExcelUploadView
 
 urlpatterns = [
-    path("bimestral/pdf", BimestralPDFView.as_view()),
-    path("ping", PdfPingView.as_view()),
+    # Libretas bimestrales (PDF)
+    path("bimestral/preview", BimestralPreviewView.as_view(), name="bimestral-preview"),
+    path("bimestral/pdf", BimestralPDFView.as_view(), name="bimestral-pdf"),
+
+    # UGEL (Excel)
+    path("ugel/upload", UgelExcelUploadView.as_view(), name="ugel-upload"),
+    # Nota: consolidado/comentarios/export se agregan en S2.
 ]

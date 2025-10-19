@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+
 # === Paths / Base ===
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,8 +24,12 @@ INSTALLED_APPS = [
     # Terceros
     "rest_framework",
     # App del proyecto (usar AppConfig)
-    "libretas.apps.LibretasConfig",
+    "apps.libretas",
+    #"libretas.apps.LibretasConfig",
 ]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # === Middleware ===
 MIDDLEWARE = [
@@ -70,7 +75,7 @@ DATABASES = {
 
 # === Static / Media ===
 STATIC_URL = "static/"
-STATICFILES_DIRS = [BASE_DIR / "libretas" / "static"]  # CSS/Fonts de libretas
+STATICFILES_DIRS = []  # CSS/Fonts de libretas
 STATIC_ROOT = BASE_DIR / "staticfiles"                 # para collectstatic en despliegue
 
 # === Zona horaria / Idioma ===
@@ -81,16 +86,13 @@ USE_TZ = True
 
 # === Django REST Framework (mínimo) ===
 REST_FRAMEWORK = {
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ],
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
     ],
 }
+
 
 # === Default PK type ===
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

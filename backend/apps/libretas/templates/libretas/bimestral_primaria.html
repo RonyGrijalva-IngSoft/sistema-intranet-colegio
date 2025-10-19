@@ -1,33 +1,6 @@
 <!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8" />
-<link rel="stylesheet" href="/static/libretas/css/pdf.css" />
-<title>Libreta Bimestral — Primaria</title>
-</head>
+<html><head><meta charset="utf-8"><title>Libreta Primaria</title></head>
 <body>
-  <h1>Libreta Bimestral — Primaria</h1>
-  <p>Grado: {{ grado }} · Sección: {{ seccion_id }} · Bimestre: {{ bimestre }}</p>
-  <table>
-    <tr>
-      <th>Alumno</th>
-      <th>Curso</th>
-      <th>B1</th><th>B2</th><th>B3</th><th>B4</th>
-      <th>Prom.</th><th>Letra</th><th>Coment.</th>
-    </tr>
-    {% for f in filas %}
-    <tr>
-      <td>{{ f.alumno }}</td>
-      <td>{{ f.curso }}</td>
-      <td>{{ f.B1 }}</td>
-      <td>{{ f.B2 }}</td>
-      <td>{{ f.B3 }}</td>
-      <td>{{ f.B4 }}</td>
-      <td>{{ f.prom }}</td>
-      <td>{{ f.letra }}</td>
-      <td>{{ f.coment }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-</body>
-</html>
+  <h1>Libreta Bimestral - Primaria</h1>
+  <!-- Aquí iría la tabla de alumnos/notas -->
+</body></html>
