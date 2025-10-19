@@ -1,6 +1,19 @@
-import mysql.connector
+import psycopg2
+import os
+from dotenv import load_dotenv
+
 import datetime
 import re
+
+# Cargar variables de entorno desde un archivo .env si existe
+load_dotenv()
+
+# Variables de configuración de la base de datos (se pueden establecer en .env)
+DB_HOST = os.getenv('DB_HOST', '')
+DB_NAME = os.getenv('DB_NAME', '')
+DB_USER = os.getenv('DB_USER', '')
+DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+DB_PORT = int(os.getenv('DB_PORT', os.getenv('PORT', 5432)))
 
 def registrar_grado(nombre, nivel, anio):
 
@@ -31,15 +44,16 @@ def registrar_grado(nombre, nivel, anio):
         return
     
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            port=DB_PORT
         )
         cursor = conexion.cursor()
 
-        sql = """INSERT INTO Grado (Nombre, Nivel, Año)
+        sql = """INSERT INTO Grado (Nombre, Nivel, Anio)
                  VALUES (%s, %s, %s)"""
 
         datos = (nombre, nivel, anio)
@@ -47,13 +61,13 @@ def registrar_grado(nombre, nivel, anio):
         cursor.execute(sql, datos)
         conexion.commit()
 
-        print(f"Grado '{nombre} - {nivel}' registrado con éxito.")
+        print(f"Grado '{nombre} - {nivel}' registrado con exito.")
 
-    except mysql.connector.Error as err:
+    except psycopg2.Error as err:
         print(f"Error al registrar el grado: {err}")
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -66,11 +80,12 @@ def registrar_grado_trabajado(nombre, id_grado, id_tutor):
         return 
     
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            port=DB_PORT
         )
         cursor = conexion.cursor()
 
@@ -85,11 +100,52 @@ def registrar_grado_trabajado(nombre, id_grado, id_tutor):
 
         print(f"Grado trabajado '{nombre}' registrado con éxito.")
 
-    except mysql.connector.Error as err:
+    except psycopg2.Error as err:
         print(f"Error al registrar el grado trabajado: {err}")
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
+            cursor.close()
+            conexion.close()
+
+
+def asignar_tutor_a_salon(id_tutor, id_grado_trabajado):
+    conexion = None
+    try:
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            port=DB_PORT
+        )
+        cursor = conexion.cursor()
+
+        sql = """UPDATE grado_trabajado
+                 SET IdTutor = %s
+                 WHERE IdGrado_trabajado = %s"""
+        
+        datos = (id_tutor, id_grado_trabajado)
+
+        cursor.execute(sql, datos)
+
+        row_count = cursor.rowcount
+        conexion.commit()
+
+        if row_count > 0:
+            print(f"Exito: Tutor (Profesor ID: {id_tutor}) asignado al Salon (Grado_Trabajado ID: {id_grado_trabajado}).")
+        else:
+            print(f"Aviso: No se encontro el salon con ID {id_grado_trabajado}. No se hizo ningun cambio.")
+
+    except psycopg2.Error as err:
+        if err.pgcode == '23503': 
+             print(f"Error: No se pudo asignar. El profesor con ID {id_tutor} no existe.")
+        else:
+            print(f"Error al asignar el tutor: {err}")
+        if conexion:
+            conexion.rollback() 
+    finally:
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -128,33 +184,33 @@ def registrar_alumno(codigo_ugel, nombres, apellidos, edad, dni, id_grado_trabaj
         return
     
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio',
-            port='3306'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            port=5432
         )
 
         cursor = conexion.cursor()
 
         sql = """INSERT INTO Alumno
                  (CodigoUGEL, Nombres, Apellidos, Edad, DNI, IdGrado_trabajado, IdPadre)
-                 VALUES (%s, %s, %s, %s, %s, %s, %s)"""
-
+                 VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING IdAlumno"""
 
         datos_alumno = (codigo_ugel, nombres, apellidos, edad, dni, id_grado_trabajado, id_padre)
 
         cursor.execute(sql, datos_alumno)
+        id_nuevo = cursor.fetchone()[0]
         conexion.commit()
 
-        print(f"Alumno '{nombres} {apellidos}' registrado con exito. ID: {cursor.lastrowid}")
+        print(f"Alumno '{nombres} {apellidos}' registrado con exito. ID: {id_nuevo}")
 
-    except mysql.connector.Error as err:
+    except psycopg2.Error as err:
         print(f"Error al registrar alumno: {err}")
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -196,11 +252,11 @@ def registrar_profesor(nombres, apellidos, dni, correo, contrasena, telefono):
         return
     
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -215,11 +271,11 @@ def registrar_profesor(nombres, apellidos, dni, correo, contrasena, telefono):
 
         print(f"Profesor '{nombres} {apellidos}' registrado con exito.")
 
-    except mysql.connector.Error as err:
+    except psycopg2.Error as err:
         print(f"Error al registrar profesor: {err}")
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -250,11 +306,11 @@ def registrar_padre(nombres, apellidos, dni, telefono):
         return
     
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -269,11 +325,11 @@ def registrar_padre(nombres, apellidos, dni, telefono):
 
         print(f"Padre/Madre '{nombres} {apellidos}' registrado con exito.")
 
-    except mysql.connector.Error as err:
+    except psycopg2.Error as err:
         print(f"Error al registrar padre: {err}")
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -298,11 +354,11 @@ def registrar_asignatura(area, nombre, cant_horas, id_grado):
         return
     
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -316,22 +372,22 @@ def registrar_asignatura(area, nombre, cant_horas, id_grado):
 
         print(f"Asignatura '{nombre}' registrada con exito.")
 
-    except mysql.connector.Error as err:
+    except psycopg2.Error as err:
         print(f"Error al registrar la asignatura: {err}")
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
 
 def registrar_asignatura_trabajada(id_grado_trabajado, id_profesor, id_asignatura):
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -345,11 +401,11 @@ def registrar_asignatura_trabajada(id_grado_trabajado, id_profesor, id_asignatur
 
         print(f"Asignatura asignada al profesor en la clase Id:{id_grado_trabajado} con éxito.")
 
-    except mysql.connector.Error as err:
+    except psycopg2.Error as err:
         print(f"Error al registrar la asignatura trabajada: {err}")
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -381,11 +437,11 @@ def registrar_nota_simple(id_alumno, id_asignatura_trabajada, calificacion, nomb
         return
 
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -399,11 +455,11 @@ def registrar_nota_simple(id_alumno, id_asignatura_trabajada, calificacion, nomb
 
         print(f"Nota '{nombre_nota}' ({calificacion}) registrada con exito para el alumno ID:{id_alumno}.")
 
-    except mysql.connector.Error as e:
+    except psycopg2.Error as e:
         print(f"Error al registrar la nota: {e}")
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -421,11 +477,11 @@ def obtener_notas_de_bimestre(id_alumno, id_asignatura_trabajada, bimestre):
         return
 
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -440,12 +496,12 @@ def obtener_notas_de_bimestre(id_alumno, id_asignatura_trabajada, bimestre):
         
         return cursor.fetchall()
 
-    except mysql.connector.Error as e:
+    except psycopg2.Error as e:
         print(f"Error al consultar las notas: {e}")
         return None
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -473,11 +529,11 @@ def actualizar_detalle_boleta(id_boleta, id_asignatura_trabajada, bimestre, prom
 
     conexion = None
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -491,9 +547,9 @@ def actualizar_detalle_boleta(id_boleta, id_asignatura_trabajada, bimestre, prom
             sql = f"UPDATE Boleta_Detalle SET {columna_bimestre} = %s WHERE IdBoleta_Detalle = %s"
             cursor.execute(sql, (promedio_bimestral, id_boleta_detalle))
         else:
-            sql = f"INSERT INTO Boleta_Detalle (IdBoleta, IdAsignatura_trabajada, {columna_bimestre}) VALUES (%s, %s, %s)"
+            sql = f"INSERT INTO Boleta_Detalle (IdBoleta, IdAsignatura_trabajada, {columna_bimestre}) VALUES (%s, %s, %s) RETURNING IdBoleta_Detalle"
             cursor.execute(sql, (id_boleta, id_asignatura_trabajada, promedio_bimestral))
-            id_boleta_detalle = cursor.lastrowid
+            id_boleta_detalle = cursor.fetchone()[0]
         
         print(f"Promedio del bimestre {bimestre} registrado en el detalle de la boleta.")
 
@@ -512,13 +568,13 @@ def actualizar_detalle_boleta(id_boleta, id_asignatura_trabajada, bimestre, prom
         conexion.commit()
         print("Detalle de boleta actualizado con exito")
 
-    except mysql.connector.Error as e:
+    except psycopg2.Error as e:
         print(f"Error al actualizar el detalle de la boleta: {e}")
         if conexion:
             conexion.rollback()
             print("Cambios revertidos.")
     finally:
-        if conexion and conexion.is_connected():
+        if conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -527,11 +583,11 @@ def actualizar_detalle_boleta(id_boleta, id_asignatura_trabajada, bimestre, prom
 def crear_boleta_vacia(id_alumno):
     conexion = None
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -546,14 +602,14 @@ def crear_boleta_vacia(id_alumno):
             print(f"La boleta para el alumno ID:{id_alumno} ya existe para el año {anio_actual}. ID de Boleta: {id_boleta}")
             return id_boleta
 
-        cursor.execute("SELECT IdGrado_trabajado FROM Alumno WHERE IdAlumno = %s", (id_alumno))
+        cursor.execute("SELECT IdGrado_trabajado FROM Alumno WHERE IdAlumno = %s", (id_alumno,))
         resultado_grado = cursor.fetchone()
         if not resultado_grado:
             print(f"Error: No se encontro el alumno con ID:{id_alumno}")
             return None
         id_grado_trabajado = resultado_grado[0]
 
-        cursor.execute("SELECT IdTutor FROM Grado_trabajado WHERE IdGrado_trabajado = %s", (id_grado_trabajado))
+        cursor.execute("SELECT IdTutor FROM Grado_trabajado WHERE IdGrado_trabajado = %s", (id_grado_trabajado,))
         resultado_tutor = cursor.fetchone()
         if not resultado_tutor:
             print(f"Error: No se encontro un tutor para el grado trabajado ID:{id_grado_trabajado}")
@@ -562,25 +618,25 @@ def crear_boleta_vacia(id_alumno):
 
         sql_crear = """
             INSERT INTO Boleta (IdAlumno, IdGrado_trabajado, IdTutor, Anio, Fecha_Emision)
-            VALUES (%s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s) RETURNING IdBoleta
         """
         datos_boleta = (id_alumno, id_grado_trabajado, id_tutor, anio_actual, datetime.date.today())
         
         cursor.execute(sql_crear, datos_boleta)
-        id_nueva_boleta = cursor.lastrowid
+        id_nueva_boleta = cursor.fetchone()[0]
         
         conexion.commit()
         
         print(f"Boleta vacia creada con exito para el alumno ID:{id_alumno}. ID de Boleta: {id_nueva_boleta}")
         return id_nueva_boleta
 
-    except mysql.connector.Error as e:
+    except psycopg2.Error as e:
         print(f"Error al crear la boleta: {e}")
         if conexion:
             conexion.rollback()
         return None
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
@@ -591,11 +647,11 @@ def obtener_notas_finales_alumno(id_alumno):
 
     notas_finales = []
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -621,19 +677,19 @@ def obtener_notas_finales_alumno(id_alumno):
         notas_finales = cursor.fetchall()
         return notas_finales
 
-    except mysql.connector.Error as e:
+    except psycopg2.Error as e:
         print(f"Error al consultar las notas finales: {e}")
         return None  
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
 
 
 
-def actualizar_boleta_con_promedio_generico(id_boleta, promedio_final):
+def actualizar_boleta_con_promedio_final(id_boleta, promedio_final):
 
     try:
         promedio_final = float(promedio_final)
@@ -646,11 +702,11 @@ def actualizar_boleta_con_promedio_generico(id_boleta, promedio_final):
     conexion = None
 
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -665,23 +721,23 @@ def actualizar_boleta_con_promedio_generico(id_boleta, promedio_final):
         else:
             print(f" No se encontro la boleta con ID:{id_boleta}. No se realizaron cambios.")
 
-    except mysql.connector.Error as e:
+    except psycopg2.Error as e:
         print(f"Error al actualizar la boleta: {e}")
         if conexion:
             conexion.rollback()
     finally:
-        if conexion and conexion.is_connected():
+        if conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
 def obtener_promedio_final_alumno(id_alumno):
 
     try:
-        conexion = mysql.connector.connect(
-            user='root',
-            password='Osito123@',
-            host='localhost',
-            database='colegio'
+        conexion = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
         )
         cursor = conexion.cursor()
 
@@ -702,79 +758,167 @@ def obtener_promedio_final_alumno(id_alumno):
         else:
             return None
 
-    except mysql.connector.Error as e:
+    except psycopg2.Error as e:
         print(f"Error al consultar el promedio final: {e}")
         return None 
 
     finally:
-        if 'conexion' in locals() and conexion.is_connected():
+        if 'conexion' in locals() and conexion and getattr(conexion, 'closed', 1) == 0:
             cursor.close()
             conexion.close()
 
-##registrar_grado("Primer Grado", "Primaria", 2023)
-##registrar_profesor("Ana", "Gomez", "12345678", "ana.g@mail.com", "profepass", "987654321")
-##registrar_padre("Luis", "Solano", "87654321", "luis.s@mail.com", "padrepass", "999888777")
-##registrar_grado_trabajado("Sección A", 1, 1)
-##registrar_alumno(12345, "Carlos", "Solano", 10, "78945612", "carlos.s@mail.com", "pass123", 2, 1)
-#registrar_alumno(12345, "pepito", "vega", 10, "78945712", "carlos.s@mail.com", "pass123", 2, 1)
+##registrar_grado("Primer Grado", "Primaria", 2025)
 
-##registrar_asignatura("Matemáticas", "Aritmética", 4, 1)
-##registrar_asignatura("Comunicacion", "Literatura", 4, 1)
-##registrar_asignatura_trabajada(2, 1, 1)
-##registrar_asignatura_trabajada(2, 1, 2)
+##registrar_profesor("Ana", "Gomez", "12345678", "ana.g@mail.com", "profepass", "987654321")
+#registrar_profesor("Profesor2", "Test", "12445678", "profesor2@mail.com", "profepass2", "987644321")
+#registrar_profesor("Profesor3", "Test", "12445688", "profesor3@mail.com", "profepass3", "987644311")
+
+##registrar_padre("Luis", "Solano", "87654321", "999888777")
+
+#registrar_grado_trabajado("Sección A", 1, 1)
+
+#registrar_asignatura("Matemáticas", "Aritmética", 10, 1)
+#registrar_asignatura("Comunicacion", "Literatura", 10, 1)
+#registrar_asignatura("Matematica", "Geometria", 10, 1)
+
+#registrar_asignatura_trabajada(1, 1, 1)
+#registrar_asignatura_trabajada(1, 2, 2)
+#registrar_asignatura_trabajada(1, 3, 3)
+
+##asignar_tutor_a_salon(1, 1)
+
+#registrar_alumno(12345, "Alumno", "Test1", 10, "78945612", 1, 1)
+#registrar_alumno(12345, "Alumno", "Test2", 10, "78945712", 1, 1)
+
+
 """registrar_nota_simple(
-    id_alumno=3,
-    id_asignatura_trabajada=3,
+    id_alumno=1,
+    id_asignatura_trabajada=1,
     calificacion=17.5,
-    nombre_nota="Examen Mensual"
-)"""
-registrar_nota_simple(
-    id_alumno=3,
-    id_asignatura_trabajada=3,
-    calificacion=17.4,
     nombre_nota="Nota1",
     bimestre=1
 )
 registrar_nota_simple(
-    id_alumno=3,
-    id_asignatura_trabajada=3,
+    id_alumno=1,
+    id_asignatura_trabajada=2,
     calificacion=17.4,
     nombre_nota="Nota2",
     bimestre=1
 )
 registrar_nota_simple(
-    id_alumno=3,
-    id_asignatura_trabajada=4,
+    id_alumno=1,
+    id_asignatura_trabajada=3,
+    calificacion=17.3,
+    nombre_nota="Nota3",
+    bimestre=1
+)
+registrar_nota_simple(
+    id_alumno=1,
+    id_asignatura_trabajada=1,
+    calificacion=17.5,
+    nombre_nota="Nota8",
+    bimestre=1
+)
+registrar_nota_simple(
+    id_alumno=1,
+    id_asignatura_trabajada=2,
+    calificacion=17.5,
+    nombre_nota="Nota9",
+    bimestre=1
+)
+registrar_nota_simple(
+    id_alumno=1,
+    id_asignatura_trabajada=3,
+    calificacion=17.5,
+    nombre_nota="Nota10",
+    bimestre=1
+)
+registrar_nota_simple(
+    id_alumno=1,
+    id_asignatura_trabajada=1,
+    calificacion=17.3,
+    nombre_nota="Nota4",
+    bimestre=2
+)
+registrar_nota_simple(
+    id_alumno=1,
+    id_asignatura_trabajada=2,
+    calificacion=17.2,
+    nombre_nota="Nota5",
+    bimestre=2
+)
+registrar_nota_simple(
+    id_alumno=1,
+    id_asignatura_trabajada=3,
+    calificacion=17.2,
+    nombre_nota="Nota6",
+    bimestre=2
+)
+registrar_nota_simple(
+    id_alumno=2,
+    id_asignatura_trabajada=1,
     calificacion=17.4,
     nombre_nota="Nota1",
     bimestre=1
 )
 registrar_nota_simple(
-    id_alumno=3,
-    id_asignatura_trabajada=4,
+    id_alumno=2,
+    id_asignatura_trabajada=2,
     calificacion=10.5,
-    nombre_nota="Nota1",
+    nombre_nota="Nota2",
     bimestre=1
 )
 registrar_nota_simple(
-    id_alumno=3,
-    id_asignatura_trabajada=4,
-    calificacion=17.4,
-    nombre_nota="Examen 1",
+    id_alumno=2,
+    id_asignatura_trabajada=3,
+    calificacion=16.4,
+    nombre_nota="Nota2",
     bimestre=1
-)
+)"""
 
+#id_de_la_boleta = crear_boleta_vacia(1)
+#id_de_la_boleta = crear_boleta_vacia(2)
 
-
-##id_de_la_boleta = crear_boleta_vacia(3)
 """actualizar_detalle_boleta(
+    id_boleta=1,
+    id_asignatura_trabajada=1,
+    bimestre=1,
+    promedio_bimestral=18
+)
+actualizar_detalle_boleta(
+    id_boleta=1,
+    id_asignatura_trabajada=2,
+    bimestre=1,
+    promedio_bimestral=16
+)
+actualizar_detalle_boleta(
     id_boleta=1,
     id_asignatura_trabajada=3,
     bimestre=1,
-    promedio_bimestral=15.4
+    promedio_bimestral=14
+)
+actualizar_detalle_boleta(
+    id_boleta=1,
+    id_asignatura_trabajada=2,
+    bimestre=2,
+    promedio_bimestral=14
 )"""
 
-#actualizar_boleta_con_promedio_generico(1,12.3)
+##actualizar_boleta_con_promedio_final(1,16)
 
 
+"""notas_asignatura1_bimestre1=obtener_notas_de_bimestre(1,1,1)
+notas_asignatura2_bimestre1=obtener_notas_de_bimestre(1,2,1)
+notas_asignatura3_bimestre1=obtener_notas_de_bimestre(1,3,1)
+print("Notas del estudiante1 del bimestre 1:")
+print(notas_asignatura1_bimestre1)
+print(notas_asignatura2_bimestre1)
+print(notas_asignatura3_bimestre1)"""
 
+"""notasfinales=obtener_notas_finales_alumno(1)
+print("Notas finales del estudiante1:")
+print(notasfinales)"""
+
+notafinal = obtener_promedio_final_alumno(1)
+print("Promedio final del estudiante1:")
+print(notafinal)
