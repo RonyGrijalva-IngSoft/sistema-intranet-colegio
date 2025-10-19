@@ -1,37 +1,40 @@
 from io import BytesIO
-from typing import Dict, Any, List
-from django.template.loader import render_to_string
-from weasyprint import HTML
+# Quitamos import de Django templates y WeasyPrint
+# Usaremos ReportLab para generar el PDF en Windows (más estable)
+
+from .data_port import IDataPort
 from .calculadora import to_letra
 from .comentarios import get_comentario
-from .data_port import IDataPort
 
-# Por ahora, el servicio requiere que le inyectes un adapter que implemente IDataPort.
-# Puedes hacer eso en un "container" o dentro de la vista si prefieres.
-# En esta rama w01, dejamos una función set_data_port() para inyectarlo desde settings o ready().
-_DATA_PORT: IDataPort | None = None
+# ReportLab
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 
-def set_data_port(adapter: IDataPort):
+_DATA_PORT = None  # type: IDataPort | None
+
+def set_data_port(adapter):
     global _DATA_PORT
     _DATA_PORT = adapter
 
-def _armar_filas(port: IDataPort, grado: int, seccion_id: int, bimestre: int) -> List[Dict[str, Any]]:
+def _armar_filas(port, grado, seccion_id, bimestre):
     alumnos = port.alumnos_por_seccion(seccion_id)
     cursos = port.cursos_de_grado(grado)
-    filas: List[Dict[str, Any]] = []
-
+    filas = []
     for cur in cursos:
         curso_id = cur["id"]
         nombre_curso = cur["nombre"]
         notas_curso = port.notas_de_curso(grado, seccion_id, curso_id)
-
         for alumno in alumnos:
             aid = alumno["id"]
             n = notas_curso.get(aid, {"B1":0,"B2":0,"B3":0,"B4":0})
-            prom = round((n["B1"] + n["B2"] + n["B3"] + n["B4"]) / 4, 2) if any(n.values()) else 0.0
-            letra = to_letra(prom) if prom > 0 else ""
-            coment = get_comentario(grado, curso_id, letra) if letra else ""
-
+            if n["B1"] or n["B2"] or n["B3"] or n["B4"]:
+                prom = round((n["B1"]+n["B2"]+n["B3"]+n["B4"])/4, 2)
+                letra = to_letra(prom)
+                coment = get_comentario(grado, curso_id, letra)
+            else:
+                prom, letra, coment = 0.0, "", ""
             filas.append({
                 "alumno": f'{alumno["apellidos"]}, {alumno["nombres"]}',
                 "curso": nombre_curso,
@@ -40,16 +43,41 @@ def _armar_filas(port: IDataPort, grado: int, seccion_id: int, bimestre: int) ->
             })
     return filas
 
-def render_pdf(nivel: str, grado: int, seccion_id: int, bimestre: int, incluir_examen: bool):
+def render_pdf(nivel, grado, seccion_id, bimestre, incluir_examen):
     if _DATA_PORT is None:
-        raise RuntimeError("No hay DataPort configurado. Inyecta un adapter que implemente IDataPort.")
+        raise RuntimeError("No hay DataPort configurado.")
+
     filas = _armar_filas(_DATA_PORT, grado, seccion_id, bimestre)
-    html = render_to_string(f"libretas/{nivel}_bimestre.html", {
-        "nivel": nivel, "grado": grado, "seccion_id": seccion_id,
-        "bimestre": bimestre, "filas": filas, "incluir_examen": incluir_examen
-    })
+
     buf = BytesIO()
-    HTML(string=html, base_url=".").write_pdf(buf)
+    doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=36, leftMargin=36, topMargin=48, bottomMargin=36)
+    story = []
+    styles = getSampleStyleSheet()
+
+    titulo = Paragraph(
+        f"Libreta Bimestral — {nivel.capitalize()} | Grado {grado} | Sección {seccion_id} | Bimestre {bimestre}",
+        styles["Heading2"]
+    )
+    story.append(titulo)
+    story.append(Spacer(1, 12))
+
+    data = [["Alumno", "Curso", "B1", "B2", "B3", "B4", "Prom.", "Letra", "Coment."]]
+    for f in filas:
+        data.append([f["alumno"], f["curso"], f["B1"], f["B2"], f["B3"], f["B4"], f["prom"], f["letra"], f["coment"]])
+
+    tabla = Table(data, repeatRows=1)
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#e5e7eb")),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.black),
+        ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+        ("FONTSIZE", (0,0), (-1,0), 10),
+        ("FONTSIZE", (0,1), (-1,-1), 9),
+        ("ALIGN", (2,1), (6,-1), "CENTER"),
+        ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+    ]))
+    story.append(tabla)
+
+    doc.build(story)
     buf.seek(0)
-    filename = f"{nivel.upper()}_{grado}_B{bimestre}.pdf"
+    filename = f"{nivel.UPPER()}_{grado}_B{bimestre}.pdf"
     return buf, filename

@@ -1,6 +1,7 @@
 asgiref==3.10.0
 Brotli==1.1.0
 cffi==2.0.0
+charset-normalizer==3.4.4
 cssselect2==0.8.0
 Django==5.2.7
 djangorestframework==3.16.1
@@ -13,6 +14,7 @@ pycparser==2.23
 pydyf==0.11.0
 pyphen==0.17.2
 python-dotenv==1.1.1
+reportlab==4.4.4
 sqlparse==0.5.3
 tinycss2==1.4.0
 tinyhtml5==2.0.0
