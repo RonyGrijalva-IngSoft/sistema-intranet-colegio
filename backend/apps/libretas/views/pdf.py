@@ -7,9 +7,12 @@ from rest_framework import status
 from ..serializers.bimestral import BimestralPdfIn
 from ..services import pdf_service
 from ..services import excel_adapter
+from apps.accesos.permissions import RolePermission
+from apps.accesos.models import AuditLog
 
 class BimestralPreviewView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    allowed_roles = ['Directora', 'Coordinador', 'Tutor', 'Docente']
 
     def get(self, request):
         ser = BimestralPdfIn(data=request.query_params)
@@ -24,7 +27,8 @@ class BimestralPreviewView(APIView):
         return JsonResponse(dto, status=200)
 
 class BimestralPDFView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RolePermission]
+    allowed_roles = ['Directora', 'Coordinador', 'Tutor', 'Docente']
 
     def post(self, request):
         ser = BimestralPdfIn(data=request.data)
@@ -45,6 +49,12 @@ class BimestralPDFView(APIView):
         pdf_bytes = pdf_service.render_bimestral_pdf(dto)
 
         filename = f"libreta_{data['nivel']}_sec{data['seccion']}_bim{data['bimestre']}.pdf"
+        # Auditoría: registro de export
+        try:
+            AuditLog.objects.create(actor=request.user, action='export_pdf', target_type='Libreta', target_id=filename)
+        except Exception:
+            # no bloquear si falla auditoría
+            pass
         resp = HttpResponse(pdf_bytes, content_type="application/pdf")
         resp["Content-Disposition"] = f'attachment; filename="{filename}"'
         return resp

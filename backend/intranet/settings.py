@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # App del proyecto (usar AppConfig)
     "apps.libretas",
+    "apps.accesos",
     #"libretas.apps.LibretasConfig",
 ]
 
