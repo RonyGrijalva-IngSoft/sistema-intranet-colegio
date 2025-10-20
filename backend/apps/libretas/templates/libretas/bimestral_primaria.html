@@ -1,6 +1,256 @@
-<!doctype html>
-<html><head><meta charset="utf-8"><title>Libreta Primaria</title></head>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Boleta de Notas 2025 – Primaria</title>
+<style>
+  :root{
+    --primary:#2D6CDF;
+    --border:#e16d2b;
+    --gray-700:#374151;
+    --gray-600:#4b5563;
+    --surface:#ffffff;
+  }
+  @page{ size:A4; margin:16mm; }
+  html,body{ background:#f7f7f7; }
+  body{ margin:0; padding:0; font:12px/1.35 "Inter",system-ui,Segoe UI,Arial,sans-serif; color:#111; }
+  .sheet{
+    background:var(--surface);
+    width:210mm; min-height:297mm;
+    margin:0 auto;
+    border-radius:10px; border:3px solid var(--border);
+    padding:14mm 12mm; box-sizing:border-box;
+    position:relative; overflow:hidden;
+  }
+
+  /* Encabezado */
+  .header{
+    display:grid; grid-template-columns:72px 1fr; align-items:center; column-gap:12px;
+  }
+  .header img{ width:72px; height:72px; object-fit:contain; border-radius:6px; }
+  .school{text-align:center;}
+  .school h1{margin:0;font-size:15px;font-weight:800;}
+  .school h2{margin:2px 0 0;font-size:18px;font-weight:900;text-transform:uppercase;}
+  .school h3{margin:2px 0 0;font-size:14px;font-weight:700;}
+  .school p.small{margin:2px 0 0;font-size:10px;color:var(--gray-600);}
+  .title{text-align:center;margin:8px 0 10px;font-size:18px;font-weight:900;letter-spacing:.4px;}
+
+  /* Datos */
+  .grid-info{
+    display:grid;grid-template-columns:1fr 120px 120px;gap:6px;margin-bottom:10px;
+  }
+  .ibox{border:1.5px solid #000;padding:6px 8px;}
+  .ibox .lbl{font-size:10px;font-weight:700;color:var(--gray-700);}
+  .ibox .val{font-size:13px;font-weight:700;}
+
+  /* Tabla */
+  table{width:100%;border-collapse:collapse;}
+  thead th{
+    font-size:11px;text-transform:uppercase;letter-spacing:.2px;padding:6px;border:1px solid #000;background:#eef3ff;
+  }
+  tbody td,tbody th{border:1px solid #000;padding:5px 6px;}
+  .center{text-align:center;}
+  .area{font-weight:800;background:#fafafa;}
+  .asig{color:#1b4b91;text-decoration:none;}
+  .promg{background:#fff9ed;font-weight:800;}
+
+  /* Footer */
+  .footer-grid{
+    display:grid;grid-template-columns:1fr 40mm 40mm;gap:10px;margin-top:12px;
+  }
+  .box{border:1.5px solid #000;padding:6px;min-height:40mm;box-sizing:border-box;}
+  .lbl{font-size:11px;font-weight:800;margin-bottom:3px;}
+  .big-number{font-size:22px;font-weight:900;text-align:center;padding:6px 0;}
+  .sig{height:22mm;border:1px dashed #999;margin:8px 0;}
+  .firmas{display:grid;grid-template-columns:1fr 28mm;gap:8px;margin-top:6px;}
+  .firmas .cell{border:1.5px solid #000;padding:6px;min-height:28mm;}
+  .firmas .cell .lbl{font-size:10px;font-weight:700;color:var(--gray-600);}
+  .bottom-bimestres{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;
+  }
+  .bottom-bimestres .cell{border:1.5px solid #000;padding:6px;text-align:center;}
+  .bottom-bimestres .lbl{font-size:10px;font-weight:700;}
+  .watermark{position:absolute;inset:auto 0 6mm 0;display:flex;justify-content:center;
+    pointer-events:none;opacity:.06;font-size:80px;font-weight:900;letter-spacing:2px;}
+</style>
+</head>
 <body>
-  <h1>Libreta Bimestral - Primaria</h1>
-  <!-- Aquí iría la tabla de alumnos/notas -->
-</body></html>
+<section class="sheet">
+  <!-- Encabezado -->
+  <div class="header">
+    <img src="{{ logo_url }}" alt="Escudo IEP" />
+    <div class="school">
+      <h1>Institución Educativa Privada</h1>
+      <h2>“CRISTO REDENTOR DE NOCHETO”</h2>
+      <h3>EDUCACIÓN PRIMARIA · DIOS, AMOR, DISCIPLINA</h3>
+      <p class="small">MZ J – LT 8 PSJ Rasuñiti · Santa Anita · “AÑO DE LA RECUPERACIÓN Y CONSOLIDACIÓN DE LA ECONOMÍA PERUANA”</p>
+    </div>
+  </div>
+
+  <div class="title">BOLETA DE NOTAS 2025 – PRIMARIA</div>
+
+  <!-- Datos -->
+  <div class="grid-info">
+    <div class="ibox">
+      <div class="lbl">APELLIDOS Y NOMBRES</div>
+      <div class="val">{{ alumno_nombre_completo }}</div>
+    </div>
+    <div class="ibox">
+      <div class="lbl">GRADO</div>
+      <div class="val">{{ grado }}</div>
+    </div>
+    <div class="ibox">
+      <div class="lbl">NIVEL</div>
+      <div class="val">PRIMARIA</div>
+    </div>
+  </div>
+
+  <!-- Tabla de notas -->
+  <table>
+    <thead>
+      <tr>
+        <th>ÁREA</th><th>ASIGNATURA</th>
+        <th>1B</th><th>2B</th><th>3B</th><th>4B</th>
+        <th>P</th><th>PROM. GLOBAL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Matemática -->
+      <tr><th class="area" rowspan="4">MATEMÁTICA</th>
+          <td><a class="asig">ARITMÉTICA</a></td>
+          <td class="center">{{ arit_b1 }}</td><td class="center">{{ arit_b2 }}</td>
+          <td class="center">{{ arit_b3 }}</td><td class="center">{{ arit_b4 }}</td>
+          <td class="center">{{ arit_p }}</td><td class="center promg">{{ arit_pg }}</td></tr>
+      <tr><td><a class="asig">ÁLGEBRA</a></td>
+          <td class="center">{{ alg_b1 }}</td><td class="center">{{ alg_b2 }}</td>
+          <td class="center">{{ alg_b3 }}</td><td class="center">{{ alg_b4 }}</td>
+          <td class="center">{{ alg_p }}</td><td class="center promg">{{ alg_pg }}</td></tr>
+      <tr><td><a class="asig">GEOMETRÍA</a></td>
+          <td class="center">{{ geo_b1 }}</td><td class="center">{{ geo_b2 }}</td>
+          <td class="center">{{ geo_b3 }}</td><td class="center">{{ geo_b4 }}</td>
+          <td class="center">{{ geo_p }}</td><td class="center promg">{{ geo_pg }}</td></tr>
+      <tr><td><a class="asig">RAZ. MATEMÁTICO</a></td>
+          <td class="center">{{ raz_b1 }}</td><td class="center">{{ raz_b2 }}</td>
+          <td class="center">{{ raz_b3 }}</td><td class="center">{{ raz_b4 }}</td>
+          <td class="center">{{ raz_p }}</td><td class="center promg">{{ raz_pg }}</td></tr>
+
+      <!-- Comunicación -->
+      <tr><th class="area" rowspan="4">COMUNICACIÓN INTEGRAL</th>
+          <td><a class="asig">GRAMÁTICA</a></td>
+          <td class="center">{{ gra_b1 }}</td><td class="center">{{ gra_b2 }}</td>
+          <td class="center">{{ gra_b3 }}</td><td class="center">{{ gra_b4 }}</td>
+          <td class="center">{{ gra_p }}</td><td class="center promg">{{ gra_pg }}</td></tr>
+      <tr><td><a class="asig">ORTOGRAFÍA</a></td>
+          <td class="center">{{ ort_b1 }}</td><td class="center">{{ ort_b2 }}</td>
+          <td class="center">{{ ort_b3 }}</td><td class="center">{{ ort_b4 }}</td>
+          <td class="center">{{ ort_p }}</td><td class="center promg">{{ ort_pg }}</td></tr>
+      <tr><td><a class="asig">COMP. LECTORA</a></td>
+          <td class="center">{{ lect_b1 }}</td><td class="center">{{ lect_b2 }}</td>
+          <td class="center">{{ lect_b3 }}</td><td class="center">{{ lect_b4 }}</td>
+          <td class="center">{{ lect_p }}</td><td class="center promg">{{ lect_pg }}</td></tr>
+      <tr><td><a class="asig">RAZ. VERBAL</a></td>
+          <td class="center">{{ rv_b1 }}</td><td class="center">{{ rv_b2 }}</td>
+          <td class="center">{{ rv_b3 }}</td><td class="center">{{ rv_b4 }}</td>
+          <td class="center">{{ rv_p }}</td><td class="center promg">{{ rv_pg }}</td></tr>
+
+      <!-- Ciencia y Tecnología -->
+      <tr><th class="area" rowspan="2">CIENCIA Y TECNOLOGÍA</th>
+          <td><a class="asig">BIOLOGÍA</a></td>
+          <td class="center">{{ bio_b1 }}</td><td class="center">{{ bio_b2 }}</td>
+          <td class="center">{{ bio_b3 }}</td><td class="center">{{ bio_b4 }}</td>
+          <td class="center">{{ bio_p }}</td><td class="center promg">{{ bio_pg }}</td></tr>
+      <tr><td><a class="asig">FÍSICA</a></td>
+          <td class="center">{{ fis_b1 }}</td><td class="center">{{ fis_b2 }}</td>
+          <td class="center">{{ fis_b3 }}</td><td class="center">{{ fis_b4 }}</td>
+          <td class="center">{{ fis_p }}</td><td class="center promg">{{ fis_pg }}</td></tr>
+
+      <!-- Personal Social -->
+      <tr><th class="area" rowspan="2">PERSONAL SOCIAL</th>
+          <td><a class="asig">HISTORIA</a></td>
+          <td class="center">{{ hist_b1 }}</td><td class="center">{{ hist_b2 }}</td>
+          <td class="center">{{ hist_b3 }}</td><td class="center">{{ hist_b4 }}</td>
+          <td class="center">{{ hist_p }}</td><td class="center promg">{{ hist_pg }}</td></tr>
+      <tr><td><a class="asig">GEOGRAFÍA</a></td>
+          <td class="center">{{ geo2_b1 }}</td><td class="center">{{ geo2_b2 }}</td>
+          <td class="center">{{ geo2_b3 }}</td><td class="center">{{ geo2_b4 }}</td>
+          <td class="center">{{ geo2_p }}</td><td class="center promg">{{ geo2_pg }}</td></tr>
+
+      <!-- Otras áreas -->
+      <tr><th class="area">EDUCACIÓN FÍSICA</th>
+          <td><a class="asig">EDUCACIÓN FÍSICA</a></td>
+          <td class="center">{{ ef_b1 }}</td><td class="center">{{ ef_b2 }}</td>
+          <td class="center">{{ ef_b3 }}</td><td class="center">{{ ef_b4 }}</td>
+          <td class="center">{{ ef_p }}</td><td class="center promg">{{ ef_pg }}</td></tr>
+
+      <tr><th class="area">EDUCACIÓN POR EL ARTE</th>
+          <td><a class="asig">EDUCACIÓN ARTÍSTICA</a></td>
+          <td class="center">{{ art_b1 }}</td><td class="center">{{ art_b2 }}</td>
+          <td class="center">{{ art_b3 }}</td><td class="center">{{ art_b4 }}</td>
+          <td class="center">{{ art_p }}</td><td class="center promg">{{ art_pg }}</td></tr>
+
+      <tr><th class="area">EDUCACIÓN RELIGIOSA</th>
+          <td><a class="asig">EDUCACIÓN RELIGIOSA</a></td>
+          <td class="center">{{ rel_b1 }}</td><td class="center">{{ rel_b2 }}</td>
+          <td class="center">{{ rel_b3 }}</td><td class="center">{{ rel_b4 }}</td>
+          <td class="center">{{ rel_p }}</td><td class="center promg">{{ rel_pg }}</td></tr>
+
+      <tr><th class="area">INGLÉS</th>
+          <td><a class="asig">INGLÉS</a></td>
+          <td class="center">{{ ing_b1 }}</td><td class="center">{{ ing_b2 }}</td>
+          <td class="center">{{ ing_b3 }}</td><td class="center">{{ ing_b4 }}</td>
+          <td class="center">{{ ing_p }}</td><td class="center promg">{{ ing_pg }}</td></tr>
+
+      <tr><th class="area">COMPUTACIÓN</th>
+          <td><a class="asig">COMPUTACIÓN</a></td>
+          <td class="center">{{ comp_b1 }}</td><td class="center">{{ comp_b2 }}</td>
+          <td class="center">{{ comp_b3 }}</td><td class="center">{{ comp_b4 }}</td>
+          <td class="center">{{ comp_p }}</td><td class="center promg">{{ comp_pg }}</td></tr>
+
+      <tr><th class="area">CONDUCTA</th>
+          <td><a class="asig">CONDUCTA</a></td>
+          <td class="center">{{ cond_b1 }}</td><td class="center">{{ cond_b2 }}</td>
+          <td class="center">{{ cond_b3 }}</td><td class="center">{{ cond_b4 }}</td>
+          <td class="center">{{ cond_p }}</td><td class="center promg">{{ cond_pg }}</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Pie -->
+  <div class="footer-grid">
+    <div class="box">
+      <div class="lbl">RECOMENDACIONES DE LA TUTORA</div>
+      <div style="min-height:30mm">{{ recomendaciones }}</div>
+      <div class="firmas">
+        <div class="cell">
+          <div class="lbl">NOMBRE DE LA PROFESORA</div>
+          <div>{{ tutora_nombre }}</div>
+          <div class="sig"></div>
+          <div class="center" style="font-size:11px">FIRMA DE LA TUTORA</div>
+        </div>
+        <div class="cell"><div class="lbl">SELLO</div></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="lbl">PROMEDIO FINAL</div>
+      <div class="big-number">{{ promedio_final }}</div>
+      <div class="lbl">ORDEN DE MÉRITO</div>
+      <div class="big-number">{{ orden_merito }}</div>
+    </div>
+
+    <div class="box">
+      <div class="lbl">PERÍODO</div>
+      <div>{{ periodo }}</div>
+      <div class="bottom-bimestres">
+        <div class="cell"><span class="lbl">1B</span>{{ sum_b1 }}</div>
+        <div class="cell"><span class="lbl">2B</span>{{ sum_b2 }}</div>
+        <div class="cell"><span class="lbl">3B</span>{{ sum_b3 }}</div>
+        <div class="cell"><span class="lbl">4B</span>{{ sum_b4 }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="watermark">PRIMARIA</div>
+</section>
+</body>
+</html>

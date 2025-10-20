@@ -1,33 +1,140 @@
-<!doctype html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-<link rel="stylesheet" href="/static/libretas/css/pdf.css" />
-<title>Libreta Bimestral — Primaria</title>
+<title>Boleta de Notas 2025 – Educación Inicial</title>
+<style>
+  @page { size:A4; margin:16mm; }
+  body{
+    font-family: Arial, Helvetica, sans-serif;
+    background-image:url("{% static 'libretas/img/ESCUDO-COLEGIO.png' %}");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:70%;
+    opacity:0.98;
+  }
+  .sheet{
+    border:3px solid #e16d2b;
+    border-radius:10px;
+    padding:14mm;
+  }
+  .header{
+    display:grid; grid-template-columns:70px 1fr; align-items:center;
+  }
+  .header img{ height:70px; width:70px; object-fit:contain; }
+  .school{text-align:center;}
+  .school h1{margin:0; font-size:14px;}
+  .school h2{margin:2px 0; font-size:20px; font-weight:900; text-transform:uppercase;}
+  .school h3{margin:2px 0; font-size:14px; font-weight:700;}
+  .school p{margin:0; font-size:10px;}
+  .title{
+    text-align:center;
+    font-size:16px;
+    font-weight:900;
+    margin:10px 0;
+  }
+  table{width:100%; border-collapse:collapse; font-size:12px;}
+  th,td{border:1px solid #000; padding:5px; vertical-align:middle;}
+  th{background:#f3f3f3;}
+  .area{font-weight:800; background:#fafafa;}
+  .greenhead{background:#d9ead3; font-weight:800;}
+  .footer-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
+  .firmas{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+  .firmas img{height:70px;}
+  .firma-prof{border-top:1px solid #000; text-align:center; font-size:11px; padding-top:3px; margin-top:10px;}
+</style>
 </head>
 <body>
-  <h1>Libreta Bimestral — Primaria</h1>
-  <p>Grado: {{ grado }} · Sección: {{ seccion_id }} · Bimestre: {{ bimestre }}</p>
-  <table>
+<section class="sheet">
+
+  <!-- Encabezado -->
+  <div class="header">
+    <img src="{% static 'libretas/img/ESCUDO-COLEGIO.png' %}" alt="Escudo">
+    <div class="school">
+      <h1>Institución Educativa Privada</h1>
+      <h2>“CRISTO REDENTOR DE NOCHETO”</h2>
+      <h3>EDUCACIÓN INICIAL – DIOS, AMOR, DISCIPLINA</h3>
+      <p>MZ J – LT 8 PSJ Rasuñiti · Santa Anita<br>“AÑO DE LA RECUPERACIÓN Y CONSOLIDACIÓN DE LA ECONOMÍA PERUANA”</p>
+    </div>
+  </div>
+
+  <div class="title">BOLETA DE NOTAS 2025 – EDUCACIÓN INICIAL</div>
+
+  <!-- Datos del alumno -->
+  <table style="margin-bottom:10px;">
     <tr>
-      <th>Alumno</th>
-      <th>Curso</th>
-      <th>B1</th><th>B2</th><th>B3</th><th>B4</th>
-      <th>Prom.</th><th>Letra</th><th>Coment.</th>
+      <th style="width:60%;">APELLIDOS Y NOMBRES</th>
+      <th style="width:20%;">GRADO</th>
+      <th style="width:20%;">NIVEL</th>
     </tr>
-    {% for f in filas %}
     <tr>
-      <td>{{ f.alumno }}</td>
-      <td>{{ f.curso }}</td>
-      <td>{{ f.B1 }}</td>
-      <td>{{ f.B2 }}</td>
-      <td>{{ f.B3 }}</td>
-      <td>{{ f.B4 }}</td>
-      <td>{{ f.prom }}</td>
-      <td>{{ f.letra }}</td>
-      <td>{{ f.coment }}</td>
+      <td>{{ alumno.apellidos_nombres }}</td>
+      <td>{{ grado }}</td>
+      <td>INICIAL</td>
     </tr>
-    {% endfor %}
   </table>
+
+  <!-- Asignaturas -->
+  <table>
+    <thead>
+      <tr class="greenhead">
+        <th>ASIGNATURA</th>
+        <th style="width:10%">1B</th>
+        <th style="width:10%">2B</th>
+        <th style="width:10%">3B</th>
+        <th style="width:10%">4B</th>
+        <th style="width:10%">PROM</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>COMUNICACIÓN</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>MATEMÁTICA</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>CIENCIA Y AMBIENTE</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>PERSONAL SOCIAL</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>GRAFOMOTRICIDAD</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><th colspan="6" class="greenhead">TALLER</th></tr>
+      <tr><td>PSICOMOTRICIDAD</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>INGLÉS</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>RELIGIÓN</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>CONDUCTA</td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td><b>PROMEDIO GLOBAL</b></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td colspan="5" class="area"><b>ORDEN DE MÉRITO</b></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Participación padres -->
+  <h3 style="margin-top:14px; background:#d9ead3; padding:4px; text-align:center;">
+    PARTICIPACIÓN DE LOS PADRES DE FAMILIA
+  </h3>
+  <table>
+    <thead>
+      <tr class="greenhead">
+        <th>CRITERIOS DE EVALUACIÓN BIMESTRAL</th>
+        <th>I</th><th>II</th><th>III</th><th>IV</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1. Mantiene aseado a su niño o niña.</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>2. Se interesa por el aprendizaje de su hijo(a).</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>3. Apoya en las actividades escolares.</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>4. Colabora con la Institución Educativa.</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>5. Asiste a la escuela de padres.</td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Firmas -->
+  <div class="firmas">
+    <div>
+      <img src="{% static 'libretas/img/FIRMA.png' %}" alt="Firma Directora"><br>
+      <div class="firma-prof">DIRECTORA<br>MISS LEYDI RUIZ</div>
+    </div>
+    <div>
+      <img src="{% static 'libretas/img/SELLO.png' %}" alt="Sello"><br>
+      <div class="firma-prof">PROFESORA<br>{{ tutora_nombre }}</div>
+    </div>
+  </div>
+
+</section>
 </body>
 </html>

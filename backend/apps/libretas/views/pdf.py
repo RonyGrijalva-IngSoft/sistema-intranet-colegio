@@ -1,50 +1,119 @@
 # backend/apps/libretas/views/pdf.py
-from django.http import HttpResponse, JsonResponse
+from __future__ import annotations
+from typing import Any, Dict
+
+from django.http import HttpResponse
+from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework import status
 
-from ..serializers.bimestral import BimestralPdfIn
-from ..services import pdf_service
-from ..services import excel_adapter
+# Si tienes WeasyPrint instalado, se usará PDF; si no, devuelve HTML.
+try:
+    from weasyprint import HTML
+    _HAS_WEASY = True
+except Exception:
+    _HAS_WEASY = False
+
+from ..services.pdf_prechecks import verificar_cierre_bimestre, verificar_examen_bimestral
+
 
 class BimestralPreviewView(APIView):
-    permission_classes = [IsAuthenticated]
-
+    """
+    GET /libretas/bimestral/preview?seccion=..&curso=..&bimestre=..[&verificar=true]
+    Vista liviana para que el front marque ✓/⚠ (no genera PDF).
+    """
     def get(self, request):
-        ser = BimestralPdfIn(data=request.query_params)
-        ser.is_valid(raise_exception=True)
-        data = ser.validated_data
+        q = request.query_params
+        seccion = str(q.get("seccion", "") or "")
+        curso = str(q.get("curso", "") or "")
+        try:
+            bimestre = int(q.get("bimestre", 1))
+        except Exception:
+            bimestre = 1
+        solo_prechecks = str(q.get("verificar", "false")).lower() in ("1", "true", "yes")
 
-        # S1: datos mínimos desde DataPort Excel “dummy”
-        filas = excel_adapter.dataport.alumnos_por_seccion_y_curso(
-            seccion_id=data["seccion"], curso_id=data.get("curso")
-        )
-        dto = pdf_service.build_preview_dto(data, filas)
-        return JsonResponse(dto, status=200)
+        cierre_ok = verificar_cierre_bimestre(seccion, bimestre)
+        examen_ok = verificar_examen_bimestral(seccion, curso, bimestre)
+
+        if solo_prechecks:
+            return Response({"prechecks": {"cierre": cierre_ok, "examen": examen_ok}}, status=status.HTTP_200_OK)
+
+        dto = {
+            "seccion": seccion,
+            "curso": curso,
+            "bimestre": bimestre,
+            "items": [],
+            "prechecks": {"cierre": cierre_ok, "examen": examen_ok},
+        }
+        return Response(dto, status=status.HTTP_200_OK)
+
 
 class BimestralPDFView(APIView):
-    permission_classes = [IsAuthenticated]
+    """
+    GET /libretas/bimestral/pdf?grado=..&bimestre=..[&nivel=..][&curso=..]
+    Genera el PDF real eligiendo plantilla por nivel (inicial/primaria/secundaria).
+    - Detección automática por 'grado':
+        3,4,5 -> inicial
+        1..6  -> primaria
+        1S/1sec/1 secundaria -> secundaria
+      Si llega ?nivel=.., se usa ese nivel explícitamente.
+    """
+    def get(self, request):
+        q = request.query_params
+        grado = str(q.get("grado", "") or "").strip()
+        curso = str(q.get("curso", "") or "").strip()
+        try:
+            bimestre = int(q.get("bimestre", 1))
+        except Exception:
+            bimestre = 1
+        nivel_param = str(q.get("nivel", "") or "").lower().strip()
 
-    def post(self, request):
-        ser = BimestralPdfIn(data=request.data)
-        ser.is_valid(raise_exception=True)
-        data = ser.validated_data
+        # 1) Prechecks (compat con helpers existentes que piden 'seccion' y 'curso').
+        #    Usamos grado como 'seccion' para no romper el helper.
+        if not verificar_cierre_bimestre(grado, bimestre):
+            return Response({"code": "BIM_NO_CERRADO"}, status=status.HTTP_400_BAD_REQUEST)
+        if not verificar_examen_bimestral(grado, curso, bimestre):
+            return Response({"code": "EXAM_NO_CARGADO"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if data.get("descargaMasiva"):
-            # S1: aún no implementado (S3). Devolvemos 400 controlado.
-            return JsonResponse(
-                {"detail": "descargaMasiva estará disponible en Semana 3"},
-                status=400
-            )
+        # 2) Detección de nivel
+        if nivel_param:
+            nivel = nivel_param
+        else:
+            if grado in {"3", "4", "5"}:
+                nivel = "inicial"
+            elif grado in {"1", "2", "3", "4", "5", "6"}:
+                nivel = "primaria"
+            elif grado.lower() in {"1s", "1sec", "1 secundaria"}:
+                nivel = "secundaria"
+            else:
+                nivel = "primaria"
 
-        filas = excel_adapter.dataport.alumnos_por_seccion_y_curso(
-            seccion_id=data["seccion"], curso_id=data.get("curso")
-        )
-        dto = pdf_service.build_preview_dto(data, filas)
-        pdf_bytes = pdf_service.render_bimestral_pdf(dto)
+        # 3) Selección de plantilla
+        if nivel == "inicial":
+            template = "libretas/bimestral_inicial.html"
+        elif nivel == "secundaria":
+            template = "libretas/bimestral_secundaria.html"
+        else:
+            template = "libretas/bimestral_primaria.html"
 
-        filename = f"libreta_{data['nivel']}_sec{data['seccion']}_bim{data['bimestre']}.pdf"
-        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
-        resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+        titulo = f"BOLETA DE NOTAS 2025 – EDUCACIÓN {nivel.upper()}"
+        contexto: Dict[str, Any] = {
+            "grado": grado,
+            "bimestre": bimestre,
+            "titulo": titulo,
+            "alumno": {"apellidos_nombres": "Perez Huaman, Ana Sofia"},
+            "tutora_nombre": "Miss Dina Torres",
+        }
+
+        html_resp = render(request, template, contexto)
+        html_str = html_resp.content.decode("utf-8")
+
+        if _HAS_WEASY:
+            pdf_bytes = HTML(string=html_str, base_url=request.build_absolute_uri("/")).write_pdf()
+            resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        else:
+            resp = HttpResponse(html_str, content_type="text/html")
+
+        resp["Content-Disposition"] = f'inline; filename="boleta_{nivel}_G{grado}_B{bimestre}.pdf"'
         return resp

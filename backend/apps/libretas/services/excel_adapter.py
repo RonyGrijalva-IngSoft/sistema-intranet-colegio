@@ -1,51 +1,65 @@
 # backend/apps/libretas/services/excel_adapter.py
-"""
-DataPort local (S1): lee un Excel "dummy" o entrega datos de ejemplo si no hay ruta.
-En S2 podrás mapear columnas reales por Hoja1, etc.
-"""
-import os
-from typing import List, Dict, Any, Optional
+from __future__ import annotations
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable, Dict, Any
+from openpyxl import load_workbook
+from openpyxl.workbook.workbook import Workbook
 
-try:
-    from openpyxl import load_workbook
-except Exception:
-    load_workbook = None  # Tests se encargan de instalar openpyxl.
+@dataclass(frozen=True)
+class ExcelBaseInfo:
+    path: Path
+    filename: str
+    sheetnames: tuple[str, ...]
 
-dataport = None  # Será inyectado en apps.LibretasConfig.ready()
+def leer_base(path: str) -> ExcelBaseInfo:
+    """
+    Carga el workbook y devuelve datos base.
+    """
+    p = Path(path)
+    wb = load_workbook(p, data_only=True)
+    return ExcelBaseInfo(path=p, filename=p.name, sheetnames=tuple(wb.sheetnames))
 
-class ExcelDataPort:
-    def __init__(self, path_env_var: str = "LIBRETAS_DATA_EXCEL_PATH"):
-        self.path_env_var = path_env_var
+def iter_alumnos_hoja(wb: Workbook, sheet_name: str) -> Iterable[Dict[str, Any]]:
+    """
+    Convención dummy para pruebas/UGEL:
+      A: alumnoId, B: alumno, C-F: B1..B4, G: curso (opcional)
+      Encabezados en fila 1, datos desde fila 2.
+    """
+    ws = wb[sheet_name]
+    for r in ws.iter_rows(min_row=2, values_only=True):
+        if r[0] is None:
+            continue
+        yield {
+            "alumnoId": r[0],
+            "alumno": r[1],
+            "B1": r[2],
+            "B2": r[3],
+            "B3": r[4],
+            "B4": r[5],
+            "curso": r[6] if len(r) > 6 else None,
+        }
 
-    def _get_path(self) -> Optional[str]:
-        path = os.environ.get(self.path_env_var)
-        return path if path and os.path.exists(path) else None
+def escribir_rangos_consolidado(wb: Workbook, sheet_name: str, rows: Iterable[Dict[str, Any]]) -> None:
+    """
+    Escribe solo promedio/letra/comentario sin romper formato:
+      H: promedio (num), I: letra (texto), J: comentario (texto)
+      Empareja por alumnoId (col A).
+    """
+    ws = wb[sheet_name]
+    idx_por_id: Dict[Any, int] = {}
+    for row in range(2, ws.max_row + 1):
+        alumno_id = ws.cell(row=row, column=1).value
+        if alumno_id is not None:
+            idx_por_id[alumno_id] = row
 
-    def alumnos_por_seccion_y_curso(self, seccion_id: int, curso_id: Optional[int] = None) -> List[Dict[str, Any]]:
-        """
-        Retorna lista mínima de alumnos con nota bimestral "dummy" para S1.
-        En S2 incorporaremos lectura real desde Excel (Hoja1) o MySQL.
-        """
-        path = self._get_path()
-        if path and load_workbook:
-            # Ejemplo mínimo: lee la primera hoja y arma filas {alumnoId, alumno, nota_num}
-            wb = load_workbook(path, data_only=True)
-            ws = wb.active
-            filas = []
-            for row in ws.iter_rows(min_row=2, values_only=True):
-                # Ajusta a tu layout real. Aquí asumimos: A=alumno, B=nota
-                alumno = (row[0] or "").strip() if row[0] else "Alumno"
-                nota = float(row[1] or 14)
-                filas.append({
-                    "alumnoId": f"ALU-{alumno[:3].upper()}",
-                    "alumno": alumno,
-                    "nota_num": nota,
-                })
-            return filas
-
-        # Fallback de ejemplo si no hay Excel:
-        return [
-            {"alumnoId": "ALU-001", "alumno": "Arias Espinoza Lian Junior", "nota_num": 12.6},
-            {"alumnoId": "ALU-002", "alumno": "Carreño Cuarta Mathias Rene", "nota_num": 13.3},
-            {"alumnoId": "ALU-003", "alumno": "Veliz Briceño Maria Jesus", "nota_num": 16.9},
-        ]
+    for item in rows:
+        rid = idx_por_id.get(item.get("alumnoId"))
+        if not rid:
+            continue
+        if "promedio" in item:
+            ws.cell(row=rid, column=8, value=float(item["promedio"]))  # H
+        if "letra" in item:
+            ws.cell(row=rid, column=9, value=str(item["letra"]))       # I
+        if "comentario" in item:
+            ws.cell(row=rid, column=10, value=str(item["comentario"])) # J

@@ -1,38 +1,73 @@
 # backend/apps/libretas/services/ugel_service.py
-import os
-import uuid
+from __future__ import annotations
+from io import BytesIO
 from typing import List, Tuple
-from django.conf import settings
-
 from openpyxl import load_workbook
 
-UPLOADS_DIR = os.path.join(settings.MEDIA_ROOT, "ugel", "uploads")
-EXPORTS_DIR = os.path.join(settings.MEDIA_ROOT, "ugel", "exports")
+from .excel_adapter import leer_base as _leer_base_info, iter_alumnos_hoja, escribir_rangos_consolidado
+from .calc_service import promedio_parciales, nota_a_letra
 
-def _ensure_dirs():
-    os.makedirs(UPLOADS_DIR, exist_ok=True)
-    os.makedirs(EXPORTS_DIR, exist_ok=True)
+def leer_base(upload_id: str) -> tuple[str, str, list[str]]:
+    """
+    Retorna (path, filename, sheetnames).
+    En productivo: resolver upload_id -> ruta real.
+    En S2: se asume upload_id ya es la ruta al .xlsx.
+    """
+    info = _leer_base_info(upload_id)
+    return (str(info.path), info.filename, list(info.sheetnames))
 
-def guardar_upload(django_file) -> Tuple[str, str]:
+def construir_consolidado(upload_id: str, grado: str, curso: str) -> List[dict]:
     """
-    Guarda .xlsx preservando el nombre original, bajo media/ugel/uploads/<uuid>/<filename>.
-    Retorna (upload_id, ruta_absoluta_guardada)
+    Lee el archivo y arma el consolidado filtrando por hoja 'grado'
+    (si no existe, usa la primera). Filtra por 'curso' si está en hoja.
+    Retorna: [{alumnoId, alumno, curso, B1..B4, promedio, letra}]
     """
-    _ensure_dirs()
-    original_name = django_file.name
-    upload_id = str(uuid.uuid4())
-    target_dir = os.path.join(UPLOADS_DIR, upload_id)
-    os.makedirs(target_dir, exist_ok=True)
+    path, _, _ = leer_base(upload_id)
+    wb = load_workbook(path, data_only=True)
+    sheet = grado if grado and grado in wb.sheetnames else wb.sheetnames[0]
+    out: List[dict] = []
 
-    target_path = os.path.join(target_dir, original_name)
-    with open(target_path, "wb") as out:
-        for chunk in django_file.chunks():
-            out.write(chunk)
-    return upload_id, target_path
+    for row in iter_alumnos_hoja(wb, sheet):
+        if curso and row.get("curso"):
+            if str(row["curso"]).strip().lower() != str(curso).strip().lower():
+                continue
+        prom = promedio_parciales(row.get("B1"), row.get("B2"), row.get("B3"), row.get("B4"))
+        out.append({
+            "alumnoId": row["alumnoId"],
+            "alumno": row["alumno"],
+            "curso": row.get("curso") or curso,
+            "B1": row.get("B1"),
+            "B2": row.get("B2"),
+            "B3": row.get("B3"),
+            "B4": row.get("B4"),
+            "promedio": round(prom, 2),
+            "letra": nota_a_letra(prom),
+        })
+    return out
 
-def inspeccionar_hojas(path: str) -> List[str]:
+def exportar_excel(upload_id: str, consolidado: list[dict], comentarios: list[dict]) -> bytes:
     """
-    Retorna la lista de hojas del Excel subido (para UI).
+    Escribe promedio/letra/comentarios sobre el MISMO archivo,
+    manteniendo nombre/hojas/formatos. Retorna bytes del .xlsx.
+    Para S2, escribe en la primera hoja (dummy). En real: mapear por grado/curso.
     """
-    wb = load_workbook(path, data_only=True, read_only=True)
-    return wb.sheetnames
+    path, _, _ = leer_base(upload_id)
+    wb = load_workbook(path)
+    if not wb.sheetnames:
+        raise ValueError("El archivo no tiene hojas.")
+    hoja = wb.sheetnames[0]
+
+    comentarios_map = {c["alumnoId"]: c.get("texto", "") for c in (comentarios or [])}
+    rows = []
+    for c in consolidado:
+        rows.append({
+            "alumnoId": c["alumnoId"],
+            "promedio": c.get("promedio"),
+            "letra": c.get("letra"),
+            "comentario": comentarios_map.get(c["alumnoId"], ""),
+        })
+
+    escribir_rangos_consolidado(wb, hoja, rows)
+    stream = BytesIO()
+    wb.save(stream)
+    return stream.getvalue()
