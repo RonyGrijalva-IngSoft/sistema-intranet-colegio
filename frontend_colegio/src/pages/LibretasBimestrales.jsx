@@ -276,7 +276,7 @@ const LibretasBimestrales = () => {
           background: '#d1fae5',
           border: 'none',
           padding: '8px 12px',
-          borderRadius: 8,
+          borderRadius: 999,
           cursor: 'pointer',
           fontFamily: 'inherit',
           fontWeight: 600,
@@ -400,8 +400,10 @@ const LibretasBimestrales = () => {
             </div>
 
             {!modal.details && <div>Cargando...</div>}
-            {modal.details && (
-              <div ref={printRef} style={{ width: 760, maxWidth: '100%', margin: '0 auto', textAlign: 'center' }}>
+              {modal.details && (
+              <div ref={printRef} style={{ width: 760, maxWidth: '100%', margin: '0 auto', textAlign: 'center', position: 'relative', paddingTop: 100 }}>
+                {/* Escudo en esquina superior izquierda: coloque el archivo en `frontend_colegio/public/escudo.png` */}
+                <img src="/escudo.png" alt="Escudo" style={{ position: 'absolute', left: 12, top: 12, width: 88, height: 'auto', boxShadow: '0 0 0 1px rgba(0,0,0,0.05)' }} />
                 {/* Encabezado general centrado sobre todo el PDF */}
                 {(() => {
                   const periodo = modal.libreta && modal.libreta.periodo_obj;
@@ -444,19 +446,25 @@ const LibretasBimestrales = () => {
                 })()}
                 {/* Encabezado con datos del alumno/aula: 2 filas x 3 columnas */}
                 <div style={{ marginTop: 8, marginBottom: 12 }}>
-                  <table style={{ width: '100%', maxWidth: 720, borderCollapse: 'collapse', border: '1px solid #d1d5db', tableLayout: 'fixed', fontSize: '0.95rem' }}>
+                  <table style={{ width: '100%', maxWidth: '100%', borderCollapse: 'collapse', border: '1px solid #d1d5db', tableLayout: 'fixed', fontSize: '0.95rem', boxSizing: 'border-box' }}>
+                    {/* Force explicit column widths so the top header aligns with the courses table below */}
+                    <colgroup>
+                      <col style={{ width: '38%' }} />
+                      <col style={{ width: '31%' }} />
+                      <col style={{ width: '31%' }} />
+                    </colgroup>
                     <thead>
                       <tr>
-                        <th style={{ padding: 8, borderRight: '1px solid #d1d5db', fontWeight: 700, textAlign: 'center' }}>Alumno</th>
-                        <th style={{ padding: 8, borderLeft: '1px solid #d1d5db', fontWeight: 700, textAlign: 'center' }}>Grado</th>
-                        <th style={{ padding: 8, borderLeft: '1px solid #d1d5db', fontWeight: 700, textAlign: 'center' }}>Nivel</th>
+                        <th style={{ padding: 8, border: '1px solid #d1d5db', fontWeight: 700, textAlign: 'center', background: '#f3f4f6', boxSizing: 'border-box' }}>Alumno</th>
+                        <th style={{ padding: 8, border: '1px solid #d1d5db', fontWeight: 700, textAlign: 'center', background: '#f3f4f6', boxSizing: 'border-box' }}>Grado</th>
+                        <th style={{ padding: 8, border: '1px solid #d1d5db', fontWeight: 700, textAlign: 'center', background: '#f3f4f6', boxSizing: 'border-box' }}>Nivel</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td style={{ padding: 8, borderRight: '1px solid #d1d5db', textAlign: 'center' }}>{modal.libreta.alumno_nombre || ''}</td>
-                        <td style={{ padding: 8, borderLeft: '1px solid #d1d5db', textAlign: 'center' }}>{modal.libreta.grado_nombre || (modal.libreta.aula_obj && modal.libreta.aula_obj.grado ? (modal.libreta.aula_obj.grado.nombre || modal.libreta.aula_nombre) : (modal.libreta.aula_nombre || ''))}</td>
-                        <td style={{ padding: 8, borderLeft: '1px solid #d1d5db', textAlign: 'center' }}>
+                        <td style={{ padding: 8, border: '1px solid #d1d5db', textAlign: 'center' }}>{modal.libreta.alumno_nombre || ''}</td>
+                        <td style={{ padding: 8, border: '1px solid #d1d5db', textAlign: 'center' }}>{modal.libreta.grado_nombre || (modal.libreta.aula_obj && modal.libreta.aula_obj.grado ? (modal.libreta.aula_obj.grado.nombre || modal.libreta.aula_nombre) : (modal.libreta.aula_nombre || ''))}</td>
+                        <td style={{ padding: 8, border: '1px solid #d1d5db', textAlign: 'center' }}>
                           {(() => {
                             const nivelFromAula = getNivelFromAula(modal.libreta.aula_obj);
                             // Several fallback field names commonly used in different APIs
@@ -480,11 +488,11 @@ const LibretasBimestrales = () => {
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12, tableLayout: 'fixed', fontSize: '0.95rem' }}>
                   <thead>
                     <tr>
-                      <th style={{ border: '1px solid #e5e7eb', padding: 8 }}>Curso</th>
+                      <th style={{ border: '1px solid #e5e7eb', padding: 8, background: '#f3f4f6' }}>Curso</th>
                       {modal.libreta.periodos_anio && modal.libreta.periodos_anio.map((p, idx) => (
-                        <th key={p.id} style={{ border: '1px solid #e5e7eb', padding: 8, textAlign: 'center' }}>{p.nombre}</th>
+                        <th key={p.id} style={{ border: '1px solid #e5e7eb', padding: 8, textAlign: 'center', background: '#f3f4f6' }}>{p.nombre}</th>
                       ))}
-                      <th style={{ border: '1px solid #e5e7eb', padding: 8, textAlign: 'center' }}>Promedio Final</th>
+                      <th style={{ border: '1px solid #e5e7eb', padding: 8, textAlign: 'center', background: '#f3f4f6' }}>Promedio Final</th>
                     </tr>
                   </thead>
                   <tbody>

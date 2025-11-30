@@ -8,6 +8,14 @@ const AulasList = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const formatYear = (val) => {
+    if (val === undefined || val === null) return '';
+    // If already a 4-digit year, return as-is; otherwise return the raw value
+    const n = Number(val);
+    if (Number.isInteger(n) && n >= 1900 && n <= 3000) return String(n);
+    return String(val);
+  };
+
   useEffect(() => {
     const fetchAulas = async () => {
       try {
@@ -39,32 +47,43 @@ const AulasList = () => {
 
   return (
     <div style={{ padding: 30, fontFamily: 'sans-serif' }}>
-      <button onClick={() => navigate('/admin')} style={{ marginBottom: 20 }}>&larr; Volver</button>
+      <button onClick={() => navigate('/admin')} style={{           
+        marginBottom: 20,
+          background: '#d1fae5',
+          border: 'none',
+          padding: '8px 12px',
+          borderRadius: 999,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          fontWeight: 600,
+          color: '#065f46'}}>&larr; Volver</button>
       <h1 style={{ marginBottom: 10 }}>Aulas y Estudiantes</h1>
       <p style={{ color: '#6b7280', marginBottom: 20 }}>Listado de todas las aulas con sus estudiantes y el tutor asignado.</p>
 
-      <div style={{ display: 'grid', gap: '16px' }}>
+      <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))' }}>
         {aulas.map(aula => (
-          <div key={aula.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16, background: 'white' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div key={aula.id} style={{ border: '2px solid #f97316', borderRadius: 10, padding: 16, background: 'white', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <div style={{ fontWeight: 'bold', color: '#0f172a' }}>{aula.grado_nombre} - Sección "{aula.nombre_seccion}"</div>
-                <div style={{ fontSize: '0.9rem', color: '#6b7280' }}>Año: {aula.anio_academico}</div>
+                <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: 6 }}>{aula.grado_nombre} - Sección "{aula.nombre_seccion}"</div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: '600' }}>Tutor</div>
+                <div style={{ fontWeight: 700, color: '#0f172a' }}>Tutor</div>
                 <div style={{ color: '#374151' }}>{aula.tutor_nombre || 'Sin asignar'}</div>
               </div>
             </div>
 
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontWeight: '600', marginBottom: 8 }}>Estudiantes ({(estudiantesPorAula[aula.id] || []).length})</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {(estudiantesPorAula[aula.id] || []).length === 0 && <div style={{ color: '#9ca3af' }}>No hay estudiantes en esta aula.</div>}
-                {(estudiantesPorAula[aula.id] || []).map(est => (
-                  <div key={est.id} style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: 6 }}>{est.nombres} {est.apellidos} ({est.dni})</div>
-                ))}
-              </div>
+              <div style={{ fontWeight: 600, marginBottom: 8 }}>Estudiantes ({(estudiantesPorAula[aula.id] || []).length})</div>
+              {(estudiantesPorAula[aula.id] || []).length === 0 ? (
+                <div style={{ color: '#9ca3af' }}>No hay estudiantes en esta aula.</div>
+              ) : (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {(estudiantesPorAula[aula.id] || []).map(est => (
+                    <li key={est.id} style={{ padding: '8px 10px', background: '#f8fafc', borderRadius: 6, marginBottom: 8 }}>{(est.nombres || '') + (est.apellidos ? ' ' + est.apellidos : '')}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         ))}
